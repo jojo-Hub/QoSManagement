@@ -1,4 +1,4 @@
---  Managegin List of QoS Entries withautomatic IP assignment.
+--  managing list of QoS entries withautomatic IP assignment based on their MAC.
 --
 --  "n/a" serves as a placeholder in case an entry was deleted.
 --  On insertion, the Program looks for lowest "n/a" entry and will
