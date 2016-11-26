@@ -1,0 +1,6 @@
+# cp QoSMLib.lua /usr/lib/lua/QoSMLib.lua
+# mkdir /usr/share/QoSM/
+# touch /usr/share/QoSM/QoS_normal
+# touch /usr/share/QoSM/QoS_high
+# touch /usr/share/QoSM/QoS_priority
+# touch /usr/share/QoSM/QoS_express
