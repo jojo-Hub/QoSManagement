@@ -1,0 +1,167 @@
+
+config interface 'wan'
+	option classgroup 'Default'
+	option download '512'
+	option upload '512'
+	option enabled '0'
+
+config classify
+	option dsthost '0.0.0.0'
+	option comment 'default low prio'
+	option target 'Normal'
+
+config default
+	option target 'Express'
+	option proto 'udp'
+	option pktsize '-500'
+
+config reclassify
+	option target 'Priority'
+	option proto 'icmp'
+
+config default
+	option target 'Bulk'
+	option portrange '1024-65535'
+
+config classgroup 'Default'
+	option classes 'Priority Express Normal Bulk'
+	option default 'Bulk'
+
+config class 'Priority'
+	option packetsize '400'
+	option avgrate '10'
+	option priority '20'
+
+config class 'Priority_down'
+	option packetsize '1000'
+	option avgrate '10'
+
+config class 'Express'
+	option packetsize '1000'
+	option avgrate '50'
+	option priority '10'
+
+config class 'Normal'
+	option packetsize '1500'
+	option packetdelay '100'
+	option avgrate '10'
+	option priority '5'
+
+config class 'Normal_down'
+	option avgrate '20'
+
+config class 'Bulk'
+	option avgrate '1'
+	option packetdelay '200'
+
+config interface 'UMTS1'
+	option classgroup 'Default'
+	option enabled '1'
+	option overhead '1'
+	option download '512'
+	option upload '512'
+
+config interface 'UMTS2'
+	option classgroup 'Default'
+	option enabled '1'
+	option overhead '1'
+	option download '512'
+	option upload '512'
+
+config interface 'UMTS3'
+	option classgroup 'Default'
+	option download '500'
+	option upload '500'
+	option enabled '0'
+
+config interface 'UMTS4'
+	option classgroup 'Default'
+	option download '512'
+	option upload '512'
+	option enabled '0'
+
+config interface 'UMTS5'
+	option classgroup 'Default'
+	option download '512'
+	option upload '512'
+	option enabled '0'
+
+config interface 'UMTS6'
+	option classgroup 'Default'
+	option download '512'
+	option upload '512'
+	option enabled '0'
+
+config classify
+	option target 'Priority'
+	option srchost '0.0.0.0'
+	option dsthost '172.16.3.0'
+	option comment 'SINA server in'
+
+config classify
+	option target 'Priority'
+	option srchost '172.16.3.0'
+	option dsthost '0.0.0.0'
+	option comment 'SINA server out'
+
+config classify
+	option target 'Express'
+	option srchost '10.8.0.0/16'
+	option dsthost '172.16.0.0/16'
+	option comment 'from VPN server'
+
+config classify
+	option target 'Express'
+	option srchost '172.16.0.0/16'
+	option dsthost '10.8.0.0/16'
+	option comment 'to VPN server'
+
+
+
+config classify
+	option srchost '0.0.0.0'
+	option dsthost '172.16.128.0/20'
+	option comment 'prio:normal range in'
+	option target  'Normal'
+
+config classify
+	option srchost '172.16.128.0/20'
+	option dsthost '0.0.0.0'
+	option comment 'prio:normal range out'
+	option target  'Normal'
+
+config classify
+	option srchost '0.0.0.0'
+	option dsthost '172.16.144.0/20'
+	option comment 'prio:high range in'
+	option target  'Normal'
+
+config classify
+	option srchost '172.16.144.0/20'
+	option dsthost '0.0.0.0'
+	option comment 'prio:high range out'
+	option target  'Normal'
+
+config classify
+	option srchost '0.0.0.0'
+	option dsthost '172.16.160.0/20'
+	option comment 'prio:priority range in'
+	option target  'Priority'
+
+config classify
+	option srchost '172.16.160.0/20'
+	option dsthost '0.0.0.0'
+	option comment 'prio:priority range out'
+	option target  'Priority'
+
+config classify
+	option srchost '0.0.0.0'
+	option dsthost '172.16.176.0/20'
+	option comment 'prio:express range in'
+	option target  'Express'
+
+config classify
+	option srchost '172.16.176.0/20'
+	option dsthost '0.0.0.0'
+	option comment 'prio:express range out'
+	option target  'Express'
