@@ -1,3 +1,8 @@
+# opkg update
+# opkg install qos-scripts
+
+Configure qos-scripts accordingly (https://wiki.openwrt.org/doc/uci/qos)
+
 # cp QoSMLib.lua /usr/lib/lua/QoSMLib.lua
 # mkdir /usr/share/QoSM/
 # touch /usr/share/QoSM/QoS_normal
