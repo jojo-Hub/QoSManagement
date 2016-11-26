@@ -6,3 +6,10 @@
 # touch /usr/share/QoSM/QoS_express
 # cp /etc/hosts /etc/hosts.backup
 # cp /etc/ethers /etc/ethers.backup
+
+To create the IP address ranges:
+
+# cp qos /etc/config/qos
+
+These ranges fit a special network environment where the need for this lib came from. If you modify the ranges, also modify the lib itself.
+
