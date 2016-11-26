@@ -4,12 +4,13 @@ A Lua lib to maintain a list of QoS assignments in openWRT. Instead of assigning
 
 ## IP priority ranges
 By default, the following ranges apply
-| Priority   | assigned IP range |
-| ------------- | ------------- |
-| QoS default  | 172.16.128.0/20  |
-| QoS high | 172.16.144.0/20 |
-| QoS priority  | 172.16.160.0/20  |
-| QoS express | 172.16.176.0/20 | 
+
+| Priority     | assigned IP range |
+| ------------ | -------------     |
+| QoS default  | 172.16.128.0/20   |
+| QoS high     | 172.16.144.0/20   |
+| QoS priority | 172.16.160.0/20   |
+| QoS express  | 172.16.176.0/20   | 
 
 ## Usage
 In your Lua application, first load the library:
