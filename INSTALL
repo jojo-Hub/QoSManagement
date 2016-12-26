@@ -3,7 +3,7 @@
 
 Configure qos-scripts accordingly (https://wiki.openwrt.org/doc/uci/qos)
 
-# cp QoSMLib.lua /usr/lib/lua/QoSMLib.lua
+# cp -R files/usr/lib/lua/* usr/lib/lua/
 # mkdir /usr/share/QoSM/
 # touch /usr/share/QoSM/QoS_default
 # touch /usr/share/QoSM/QoS_high
