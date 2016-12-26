@@ -1,0 +1,253 @@
+<%+header%>
+
+<!--  Page to show infos about the QoS of devices in SINA.
+
+VERSION 2.0
+
+- When adding a device, a validation of parameters is shown.
+
+- When page is opened, it will call a script to read the files
+    /usr/share/QoSM/QoS_default
+    /usr/share/QoSM/QoS_express
+    /usr/share/QoSM/QoS_high
+    /usr/share/QoSM/QoS_priority
+  and display their content. Also, a button to change priority
+  or delete the entry is provided
+
+TODO: create pdf from list
+-->
+
+<script>
+
+//*******************************************************************************************
+//main function to populate the table, will request the content of the desired prio table
+// and populate the table with it. empty entries will be obmitted.
+function populateTable(prio) {
+
+  var stxhr = new XHR();
+  stxhr.get('<%=luci.dispatcher.build_url("admin", "SINA", "listQoSEntries")%>' + '/' + prio, null,
+  function(x, mArray)
+  {
+
+     //mArray is an arry of hostname, MAC, device, and IP of the desired priority
+     // the array might be empty => no entries for the priority
+    var row = document.getElementById("prio_" + prio);
+
+    if(mArray != null & mArray[0] != null) // there is at least one entry
+    {
+
+      for(i=mArray.length-1; i>=0; --i) //have to traverse backwards because of insertBefore()
+      {
+        //display message in data field of left row (only if the IP is not null
+        if(mArray[i].IP != null)
+        {
+          var child = document.createElement('tr');
+          child.className = "inner";
+          child.innerHTML = "<td>" + mArray[i].host + "</td><td>" + mArray[i].IP + "</td><td>"+
+                            mArray[i].MAC + "</td><td>" + mArray[i].device + "</td><td>" + prio +"</td><td>"+
+			    "<input type='button' value='Edit' class='cbi-button cbi-button-edit' " +
+                                         "onclick='editDevice(\"" + mArray[i].IP + "\",\"" + mArray[i].host +
+                                         "\",\"" + mArray[i].MAC + "\",\"" + mArray[i].device + "\",\"" + prio + "\")'/> " +
+			    "<input type='button' value='Delete' class='cbi-button cbi-button-reset' " +
+                                         "onclick='deleteDevice(\"" + mArray[i].IP + "\",\"" + prio + "\")'/></td>";
+          row.parentNode.insertBefore(child, row.nextSibling);
+        }
+      }
+    }
+  }
+  );
+}
+
+//*******************************************************************************************
+function reloadTable(prio)
+{
+  //delete all rows of the current prio-table (i.e. all siblings which have class==inner)
+  var row = document.getElementById("prio_" + prio);
+  while (row.nextSibling.className == "inner") {
+    row.parentNode.removeChild(row.nextSibling);
+  }
+  
+  //and populate again
+  populateTable(prio);
+}
+
+//*******************************************************************************************
+function deleteDevice(IP, prio)
+{
+  var stxhr = new XHR();
+  stxhr.get('<%=luci.dispatcher.build_url("admin", "SINA", "deleteQoSEntry")%>' + '/' + IP, null,
+  function(x, mArray)
+  {
+        var status = document.getElementById('status');
+        if(mArray.success)
+        {
+          reloadTable(prio);
+          status.innerHTML = "&nbsp;&emsp;<font color='green'>" + mArray.text + "</font>"
+        }
+        else
+        {
+          status.innerHTML = "&nbsp;&emsp;<font color='red'><b>Error:</b> " + mArray.text + "</font>";
+        }
+  }
+  );
+
+}
+
+
+//*******************************************************************************************
+function addDevice()
+{
+
+  //get values from the form
+    var hostname = document.getElementById('hostname').value;
+    var MAC = document.getElementById('mac').value;
+    var prio = document.getElementById('prio').value;
+    var device = document.getElementById('device').value;
+
+  // execute the request
+  var stxhr = new XHR();
+  stxhr.get('<%=luci.dispatcher.build_url("admin", "SINA", "addQoSEntry")%>' + '/' + hostname +
+                      '/' + MAC + '/' + prio + '/' + device, null,
+  function(x, mArray)
+  {
+        var status = document.getElementById('status');
+        if(mArray.success) //if adding succeeded, empty the form fields and display the (new) table
+        {
+          reloadTable(prio);
+          document.forms[0].reset();
+          status.innerHTML = "&nbsp;&emsp;<font color='green'>" + mArray.text + "</font>"
+        }
+        else
+        {
+          status.innerHTML = "&nbsp;&emsp;<font color='red'><b>Error:</b> " + mArray.text + "</font>";
+        }
+  }
+  );
+}
+
+//*******************************************************************************************
+// copy the essential data to the add/modify-form and toogle function of add/modify-button to
+// modify-mode
+function editDevice(IP, hostname, mac, device, prio)
+{
+    //set the form values to the ones from the list
+    document.getElementById('hostname').value = hostname;
+    document.getElementById('mac').value = mac;
+    document.getElementById('prio').value = prio;
+    document.getElementById('device').value = device;
+
+    //change attributes of the Add/Modify-Button to allow the modification
+    document.getElementById('AddModifyButton').value = 'Modify';
+    document.getElementById('AddModifyButton').setAttribute('onclick','modifyDevice("'+IP+'","'+prio+'")');
+}
+
+//*******************************************************************************************
+// deletes former entry and writes the modified to the list (via usual add function from 
+// current values in "Add/Modify"-form. Updates both prio-tables via reloadTable() (for
+// the new table this happens in addDevice()). Toogles Function of the Add/Modify-Button
+// back to add-mode.
+function modifyDevice(IP,prio)
+{
+  var stxhr = new XHR();
+  stxhr.get('<%=luci.dispatcher.build_url("admin", "SINA", "deleteQoSEntry")%>' + '/' + IP, null,
+  function(x, mArray)
+  {
+        if(mArray.success)
+        {
+          reloadTable(prio);
+          document.getElementById('AddModifyButton').value = 'Add';
+          document.getElementById('AddModifyButton').setAttribute('onclick','addDevice()');
+          addDevice();
+	}
+        else {
+          document.getElementById('status').innerHTML = "&nbsp;&emsp;<font color='red'><b>Error:</b> Can not find IP in "+
+                           "/etc/hosts. Check /usr/share/QoSM/QoS_*, /etc/ethers, and /etc/hosts for consistency.</font>";
+        }
+  }
+  );
+}
+
+</script>
+
+
+<style>
+
+  tr.firstline td { padding-bottom: 0; border-bottom: 0}
+  tr.lastline td  { padding-top: 0; border-top: 0;}
+  tr.inner td { padding-top: 1px; padding-bottom: 1px; border: 0; }
+
+
+  input:invalid {
+      color: red;
+  }
+
+</style>
+
+
+
+
+<h3>QoS Mangement Interface</h3>
+<br> 
+
+<h4>Add/Modify Device <span Title="To edit an entry, click on it's edit button first. Change the desired value(s) in this view and click 'Modify' to apply.
+
+To cancel the edit, reload the page to get back to the 'Add'-mode.">
+<img src="/luci-static/resources/cbi/help.gif" alt="help"></span>
+</h4>
+<form>
+        &emsp;
+	<label for="Hostname">Hostname&nbsp;</label>
+	<input type="text" id="hostname" name="Hostname" maxlength="255"
+               pattern="[A-Za-z][A-Za-z\d-]{0,254}" required>
+        &emsp;
+	<label for="MAC">MAC&nbsp;</label>
+	<input type="text" id="mac" name="MAC" maxlength="17"
+               pattern="([A-F\d]{2}:){5}[A-F\d]{2}" style='width:12em'
+               placeholder="AA:BB:CC:DD:EE:FF" required>
+        &emsp;
+	<label for="prio">Priority&nbsp;</label>
+	<select id="prio" name="prio" style='width:7em'>
+          <option value="default">Default</option>
+          <option value="high">High</option>
+          <option value="express">Express</option>
+          <option value="priority">Priority</option>
+        </select>
+	&emsp;
+	<label for="device">Device&nbsp;</label>
+	<select id="device" name="device" style='width:5em'>
+          <option value="PC">PC</option>
+          <option value="Mobile">Mobile</option>
+        </select>
+	&emsp;
+	<input id='AddModifyButton' type='button' value='Add' class='cbi-button cbi-button-add' onclick='addDevice()'/>
+</form>
+<div id="status" ><br></div>
+<br>
+
+<h4>List of currently registered Devices</h4>
+<!-- initial view, function to gather information is auto.called one after page was load
+     by call at the end of the page
+-->
+<table id="data-table">
+       <tr> <th>Hostname</th> <th>Assigned IP</th> <th>Registered MAC</th> <th>Device</th> <th>Priority</th> <th>Actions</th></tr>
+       <tr id="prio_default"></tr>
+       <tr id="prio_high"></tr>
+       <tr id="prio_express"></tr>
+       <tr id="prio_priority"></tr>
+</table>
+
+<%+footer%>
+
+
+<!-- 
+  javaScript-function calls at bottom will be auto-executed after page's load 
+  here: perform fill the table with hostnames, MACs and IPs
+-->
+
+<script>
+  document.forms[0].reset();
+  populateTable("default");
+  populateTable("high");
+  populateTable("express");
+  populateTable("priority");
+</script>
