@@ -1,4 +1,6 @@
 --  Managing a list of QoS entries with automatic IP assignment.
+--  
+--  VERSION 2.1
 --
 --  "n/a" serves as a placeholder in case an entry was deleted.
 --  On insertion, the program looks for lowest "n/a" entry and will
@@ -11,6 +13,7 @@
 --     - QoSMLib.printPrioList(prio)
 --     - QoSMLib.printAll()
 --     - QoSMLib.changePrio(IP, newPrio)
+--     - QoSMLib.getPrioList(prio)  -- returns a db of the desired priority
 
 local QoSMLib = {}
 
@@ -122,7 +125,6 @@ end
 
 local function restartDNS()
   os.execute("/etc/init.d/dnsmasq reload")
-  print("  DHCP Server restarted. Reconnect the device to make changes effective.\n")
 end
 
 
@@ -235,7 +237,6 @@ end
 local function deleteEntry(db, key)
 
   if db[key] == nil or db[key].host == "n/a" then  --check whether entry is there
-    print("  Entry not there. Nothing to delete.")
     return 0
   else
     local hostname = db[key].host
@@ -261,27 +262,31 @@ end
 ----------------------------------------------------------------------------
 
 function QoSMLib.add(hostname, MAC, prio, device)
-  print()
+  result = {}
 
 --do some checks
   if not checkMAC(MAC) then
-    print("  Invalid MAC, check characters and format (AA:BB:CC:DD:EE:FF).")
-    return 0
+    result.text = "Invalid MAC address, check characters and format (AA:BB:CC:DD:EE:FF)."
+    result.success = false 
+    return result
   end
 
   if not checkPrio(prio) then
-    print("  Invalid priority.")
-    return 0
+    result.text = "Invalid Priority given."
+    result.success = false 
+    return result
   end
 
   if MACalreadyAssigned(MAC) then
-    print("  MAC " .. MAC .. " is alredy in use. Abort.\n")
-    return false
+    result.text = "MAC address '" .. MAC .. "' is alredy in use."
+    result.success = false 
+    return result
   end
 
   if hostnameAlreadyAssigned(hostname) then
-    print("  Hostname " .. hostname .. " is alredy in use. Abort.\n")
-    return false
+    result.text = "Hostname '" .. hostname .. "' is alredy in use."
+    result.success = false 
+    return result
   end
 
 
@@ -293,13 +298,14 @@ function QoSMLib.add(hostname, MAC, prio, device)
   if IP ~= nil and written then
     os.execute("echo '" .. MAC .. " " .. hostname .. "' >> /etc/ethers")
     os.execute("echo '" .. IP .. " " .. hostname .. "' >> /etc/hosts")
-    print("  Successfully assigned " .. hostname .. " (" .. MAC .. ") to " ..prio .. "/" .. IP)
     restartDNS()
-    print()
-    return true
+    result.text = "Successfully assigned '" .. hostname .. "' (" .. MAC .. ") to " .. prio .. "/" .. IP ..". Now reconnect the device to make changes effective."
+    result.success = true
+    return result
   else
-    print("  Error adding host to list. Maybe maximum reached?\n")
-    return false
+    result.text = "Error adding host to list. Maybe maximum reached?"
+    result.success = false 
+    return result
   end
 
 end
@@ -307,11 +313,12 @@ end
 
 
 function QoSMLib.deleteIP(IP)
-  print()
+  result = {}
 
   if not IPAlreadyAssigned(IP, nil) then
-    print("  Could not find IP to delete. Abort.\n")
-    return false
+    result.text = "Can not find IP in /etc/hosts. Check /usr/share/QoSM/QoS_*, /etc/ethers, and /etc/hosts for consistency."
+    result.success = false 
+    return result
   end
 
   local prio = getPrioOfIP(IP)
@@ -319,23 +326,39 @@ function QoSMLib.deleteIP(IP)
   local db = readList(ListName)
   local key = getIndex(IP, prio)
 
-  print("  Will delete '" .. db[key].host .. "' (MAC " .. db[key].MAC .. ").")
-  print("  Continue? [Y/N]")
-  io.flush()
-  if io.read() == "Y" then
-    hostname = deleteEntry(db, key)
+    local MAC = db[key].MAC
+    local hostname = deleteEntry(db, key)
     if hostname ~= nil then
       writeList(db, ListName)
       deleteDNSassignment(hostname)
-      print("  Sucessfully deleted.")
       restartDNS()
-      print()
-      return true
+      result.text = "'" .. hostname .. "' (" .. MAC .. ") has been deleted sucessfully."
+      result.success = true 
+      return result
     else
-      print("  Error deleting host from list.\n")
-      return false
+      result.text = "Error deleting " .. hostname .. "' (" .. MAC .. ") from list."
+      result.success = true 
+      return result
     end
-  end
+
+end
+
+
+
+function QoSMLib.getPrioList(prio)
+  local fileName = "/usr/share/QoSM/QoS_" .. prio
+  local db = readList(fileName)
+
+  -- add the IP
+  for key,value in pairs(db) do
+       if db[key].host ~= "n/a" then
+         db[key].IP = getIP(key, prio)
+       else
+         db[key].IP = "n/a"
+       end
+   end
+
+  return db
 
 end
 
