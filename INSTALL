@@ -3,12 +3,15 @@
 
 Configure qos-scripts accordingly (https://wiki.openwrt.org/doc/uci/qos)
 
-# cp -R files/usr/lib/lua/* usr/lib/lua/
 # mkdir /usr/share/QoSM/
 # touch /usr/share/QoSM/QoS_default
 # touch /usr/share/QoSM/QoS_high
 # touch /usr/share/QoSM/QoS_priority
 # touch /usr/share/QoSM/QoS_express
+
+# cp -R files/usr/lib/lua/* usr/lib/lua/
+# rm -r /tmp/luci-*
+
 # cp /etc/hosts /etc/hosts.backup
 # cp /etc/ethers /etc/ethers.backup
 
