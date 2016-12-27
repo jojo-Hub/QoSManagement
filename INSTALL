@@ -9,7 +9,7 @@ Configure qos-scripts accordingly (https://wiki.openwrt.org/doc/uci/qos)
 # touch /usr/share/QoSM/QoS_priority
 # touch /usr/share/QoSM/QoS_express
 
-# cp -R files/usr/lib/lua/* usr/lib/lua/
+# cp -R files/usr/lib/lua/* /usr/lib/lua/
 # rm -r /tmp/luci-*
 
 # cp /etc/hosts /etc/hosts.backup
